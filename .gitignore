@@ -1,0 +1,9 @@
+target/
+.settings/
+.project
+.classpath
+
+*.log
+
+# DB 접속정보
+src/main/resources/properties/jdbc.properties

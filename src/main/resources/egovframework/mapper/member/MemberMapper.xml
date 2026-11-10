@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="memberMapper">
+	<!-- 전체 멤버 조회 -->
+	<select id="selectMemberList"
+		resultType="com.studyhub.member.service.MemberVO">
+		SELECT
+			ID AS memberId,
+			PASSWORD AS password,
+			NAME AS name,
+			EMAIL AS email,
+			ROLE AS role,
+			JOIN_DATE AS joinDate
+		FROM TB_MEMBER
+		ORDER BY JOIN_DATE DESC
+	</select>
+	
+	<!-- 멤버 가입 -->
+	<insert id="insertMember"
+		parameterType="com.studyhub.member.service.MemberVO">
+		INSERT INTO TB_MEMBER (
+			ID,
+			PASSWORD,
+			NAME,
+			EMAIL,
+			ROLE,
+			JOIN_DATE
+		)
+		VALUES (
+			#{memberId},
+			#{password},
+			#{name},
+			#{email},
+			'USER',
+			SYSDATE
+		)
+	</insert>
+	
+	<!-- 로그인 기능(선택한 ID의 정보 불러오기) -->
+	<select id="selectLoginMember"
+		parameterType="com.studyhub.member.service.MemberVO"
+		resultType="com.studyhub.member.service.MemberVO">
+		SELECT
+			ID AS memberId,
+			PASSWORD AS password,
+			NAME AS name,
+			EMAIL AS email,
+			ROLE AS role,
+			JOIN_DATE AS joinDate
+		FROM TB_MEMBER
+			WHERE ID = #{memberId}
+			AND PASSWORD = #{password}
+	</select>
+</mapper>

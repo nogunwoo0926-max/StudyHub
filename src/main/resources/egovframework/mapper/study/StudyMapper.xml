@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="studyMapper">
+	<!-- 스터디 목록 조회 -->
+	<select id="selectStudyList" resultType="com.studyhub.study.service.StudyVO">
+		SELECT
+			STUDY_ID AS studyId,
+			LEADER_ID AS leaderId,
+			TITLE AS title,
+			CONTENT AS content,
+			MAX_MEMBER AS maxMember,
+			CURRENT_MEMBER AS currentMember,
+			STATUS AS status,
+			START_DATE AS startDate,
+			END_DATE AS endDate,
+			REG_DATE AS regDate
+		FROM TB_STUDY
+		WHERE STATUS &lt;&gt; 'CANCELLED'
+		ORDER BY REG_DATE DESC
+	</select>
+	
+	<!-- 스터디 등록(로그인 필수) -->
+	<insert id="insertStudy" parameterType="com.studyhub.study.service.StudyVO">
+	    INSERT INTO TB_STUDY (
+	        STUDY_ID,
+	        LEADER_ID,
+	        TITLE,
+	        CONTENT,
+	        MAX_MEMBER,
+	        CURRENT_MEMBER,
+	        STATUS,
+	        START_DATE,
+	        END_DATE,
+	        REG_DATE
+	    )
+	    VALUES (
+	        SEQ_STUDY.NEXTVAL,
+	        #{leaderId},
+	        #{title},
+	        #{content},
+	        #{maxMember},
+	        1,
+	        'OPEN',
+	        #{startDate},
+	        #{endDate},
+	        SYSDATE
+	    )
+	</insert>
+	
+	<!-- 스터디 상세 조회 -->
+	<select id="selectStudyDetail" parameterType="long" resultType="com.studyhub.study.service.StudyVO">
+		SELECT
+	        STUDY_ID AS studyId,
+	        LEADER_ID AS leaderId,
+	        TITLE AS title,
+	        CONTENT AS content,
+	        MAX_MEMBER AS maxMember,
+	        CURRENT_MEMBER AS currentMember,
+	        STATUS AS status,
+	        START_DATE AS startDate,
+	        END_DATE AS endDate,
+	        REG_DATE AS regDate
+	    FROM TB_STUDY
+	    WHERE STUDY_ID = #{studyId}
+	</select>
+	
+	<!-- 스터디 내용 수정 -->
+	<update id="updateStudy" parameterType="com.studyhub.study.service.StudyVO">
+	    UPDATE TB_STUDY
+	    SET
+	        TITLE = #{title},
+	        CONTENT = #{content},
+	        MAX_MEMBER = #{maxMember},
+	        START_DATE = #{startDate},
+	        END_DATE = #{endDate}
+	    WHERE STUDY_ID = #{studyId}
+	</update>
+	
+	<!-- 스터디 취소(논리 삭제) 신청 기록과 스터디 행은 보존하고, 일반 목록에서만 숨김 -->
+	<update id="deleteStudy" parameterType="long">
+	    UPDATE TB_STUDY
+	    SET STATUS = 'CANCELLED'
+	    WHERE STUDY_ID = #{studyId}
+	      AND STATUS &lt;&gt; 'CANCELLED'
+	</update>
+
+	<!-- 스터디 취소 시 신청 이력도 삭제하지 않고 취소 상태로 보존 -->
+	<update id="cancelStudyMembers" parameterType="long">
+	    UPDATE TB_STUDY_MEMBER
+	    SET STATUS = 'CANCELLED'
+	    WHERE STUDY_ID = #{studyId}
+	      AND STATUS &lt;&gt; 'CANCELLED'
+	</update>
+	
+	<!-- 스터디 신청 -->
+	<insert id="insertStudyMember" parameterType="com.studyhub.study.service.StudyMemberVO">
+	    INSERT INTO TB_STUDY_MEMBER (
+	        STUDY_MEMBER_ID,
+	        STUDY_ID,
+	        MEMBER_ID,
+	        STATUS,
+	        APPLY_DATE
+	    )
+	    VALUES (
+	        SEQ_STUDY_MEMBER.NEXTVAL,
+	        #{studyId},
+	        #{memberId},
+	        'WAIT',
+	        SYSDATE
+	    )
+	</insert>
+	
+	<!-- 스터디 신청자 목록 조회 -->
+	<select id="selectStudyMemberList" parameterType="long" resultType="com.studyhub.study.service.StudyMemberVO">
+	    SELECT
+	        STUDY_MEMBER_ID AS studyMemberId,
+	        STUDY_ID AS studyId,
+	        MEMBER_ID AS memberId,
+	        STATUS AS status,
+	        APPLY_DATE AS applyDate
+	    FROM TB_STUDY_MEMBER
+	    WHERE STUDY_ID = #{studyId}
+	    ORDER BY APPLY_DATE ASC
+	</select>
+	
+	<!-- 스터디 신청 승인 시 -->
+	<update id="approveStudyMember" parameterType="long">
+	    UPDATE TB_STUDY_MEMBER
+	    SET STATUS = 'APPROVED'
+	    WHERE STUDY_MEMBER_ID = #{studyMemberId} AND STATUS = 'WAIT'
+	</update>
+	
+	<!-- 스터디 신청 거부 시 -->
+	<update id="rejectStudyMember" parameterType="long">
+	    UPDATE TB_STUDY_MEMBER
+	    SET STATUS = 'REJECTED'
+	    WHERE STUDY_MEMBER_ID = #{studyMemberId}
+	      AND STATUS = 'WAIT'
+	</update>
+	
+	<!-- 스터디 멤버 증가 -->
+	<update id="increaseCurrentMember" parameterType="long">
+	    UPDATE TB_STUDY
+	    SET CURRENT_MEMBER = CURRENT_MEMBER + 1
+	    WHERE STUDY_ID = #{studyId} AND CURRENT_MEMBER &lt; MAX_MEMBER
+	</update>
+	
+	<!-- 스터디 신청 단건 조회(특정 신청 건이 실제로 누구의 신청이고, 어느 스터디에 대한 신청인지 DB 기준으로 다시 확인) -->
+	<select id="selectStudyMember" parameterType="long" resultType="com.studyhub.study.service.StudyMemberVO">
+	    SELECT
+	        STUDY_MEMBER_ID AS studyMemberId,
+	        STUDY_ID AS studyId,
+	        MEMBER_ID AS memberId,
+	        STATUS AS status,
+	        APPLY_DATE AS applyDate
+	    FROM TB_STUDY_MEMBER
+	    WHERE STUDY_MEMBER_ID = #{studyMemberId}
+	</select>
+	
+	<!-- 사용자의 과거 스터디 신청 기록 확인용 -->
+	<select id="selectMemberApplication" parameterType="com.studyhub.study.service.StudyMemberVO" resultType="com.studyhub.study.service.StudyMemberVO">
+	    SELECT
+	        STUDY_MEMBER_ID AS studyMemberId,
+	        STUDY_ID AS studyId,
+	        MEMBER_ID AS memberId,
+	        STATUS AS status,
+	        APPLY_DATE AS applyDate
+	    FROM TB_STUDY_MEMBER
+	    WHERE STUDY_ID = #{studyId} AND MEMBER_ID = #{memberId}
+	</select>
+	
+	<!-- 스터디 재신청 -->
+	<update id="reapplyStudy" parameterType="com.studyhub.study.service.StudyMemberVO">
+	    UPDATE TB_STUDY_MEMBER
+	    SET STATUS = 'WAIT',
+	        APPLY_DATE = SYSDATE
+	    WHERE STUDY_ID = #{studyId} AND MEMBER_ID = #{memberId} AND STATUS IN ('REJECTED', 'CANCELLED')
+	</update>
+	
+	<!-- 스터디 신청 취소 -->
+	<update id="cancelStudyApplication" parameterType="com.studyhub.study.service.StudyMemberVO">
+	    UPDATE TB_STUDY_MEMBER
+	    SET STATUS = 'CANCELLED'
+	    WHERE STUDY_ID = #{studyId} AND MEMBER_ID = #{memberId} AND STATUS = 'WAIT'
+	</update>
+</mapper>
