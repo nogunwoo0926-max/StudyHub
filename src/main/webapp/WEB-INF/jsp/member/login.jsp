@@ -4,6 +4,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/studyhub.css">
 <title>StudyHub 로그인</title>
 </head>
 <body>

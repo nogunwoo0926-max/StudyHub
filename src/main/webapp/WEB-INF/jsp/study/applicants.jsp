@@ -7,6 +7,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/studyhub.css">
 <title>스터디 신청자 관리</title>
 </head>
 <body>

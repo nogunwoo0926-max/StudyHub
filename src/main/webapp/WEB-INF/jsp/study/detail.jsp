@@ -3,15 +3,15 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 
-<fmt:formatDate value="${study.startDate}" pattern="yyyy년-MM월-dd일"
-	var="startDate" />
-<fmt:formatDate value="${study.endDate}" pattern="yyyy년-MM월-dd일"
-	var="endDate" />
+<fmt:formatDate value="${study.startDate}" pattern="yyyy년 MM월 dd일" var="startDate" />
+<fmt:formatDate value="${study.endDate}" pattern="yyyy년 MM월 dd일" var="endDate" />
+<fmt:formatDate value="${study.cancelDate}"  pattern="yyyy년 MM월 dd일 HH:mm" var="cancelDate" />
 
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/studyhub.css">
 <title>${study.title}</title>
 </head>
 <body>
@@ -55,9 +55,27 @@
 	<c:if test="${study.status ne 'CANCELLED' and not empty sessionScope.loginMember and sessionScope.loginMember.memberId eq study.leaderId}">
 		<a href="${pageContext.request.contextPath}/study/edit.do?studyId=${study.studyId}">수정 </a>
 		<br>
-		<form action="${pageContext.request.contextPath}/study/delete.do" method="post" style="display:inline;">
-			<input type="hidden" name="studyId" value="${study.studyId}">
-			<button type="submit" onclick="return confirm('스터디를 취소하시겠습니까? 신청 기록은 보존됩니다.');"> 스터디 취소</button>
+		<c:if test="${study.status eq 'OPEN'}">
+			<form action="${pageContext.request.contextPath}/study/close.do" method="post" style="display:inline;">
+				<input type="hidden" name="studyId" value="${study.studyId}">
+				<button type="submit" onclick="return confirm('스터디 모집을 마감하시겠습니까?');">모집 마감</button>
+			</form>
+			<br>
+		</c:if>
+		<c:if test="${study.status eq 'CLOSED' and study.currentMember lt study.maxMember}">
+			<form action="${pageContext.request.contextPath}/study/open.do" method="post" style="display:inline;">
+				<input type="hidden" name="studyId" value="${study.studyId}">
+				<button type="submit" onclick="return confirm('스터디 모집을 다시 시작하시겠습니까?');">모집 재개</button>
+			</form>
+			<br>
+		</c:if>
+		<form action="${pageContext.request.contextPath}/study/delete.do" method="post">
+		    <input type="hidden" name="studyId" value="${study.studyId}">
+		    <label for="cancelReason">취소 사유</label>
+		    <br>
+		    <textarea id="cancelReason" name="cancelReason" rows="5" cols="50" required placeholder="스터디 취소 사유를 입력해주세요."></textarea>
+		    <br>
+		    <button type="submit" onclick="return confirm('스터디를 취소하시겠습니까?');"> 스터디 취소 </button>
 		</form>
 	</c:if>
 	
@@ -92,12 +110,24 @@
 		<!-- 승인된 경우 -->
 		<c:if test="${myApplication.status eq 'APPROVED'}">
 			<span>참여 중</span>
+			<form action="${pageContext.request.contextPath}/study/leave.do" method="post" style="display:inline;">
+				<input type="hidden" name="studyId" value="${study.studyId}">
+				<button type="submit" onclick="return confirm('스터디에서 탈퇴하시겠습니까?');">스터디 탈퇴</button>
+			</form>
 		</c:if>
 
 	</c:if>
 
-	<c:if test="${study.status eq 'CANCELLED' and not empty sessionScope.loginMember and sessionScope.loginMember.memberId ne study.leaderId}">
-		<p>스터디장이 취소한 스터디입니다. 신청 기록은 보존되어 취소 상태로 표시됩니다.</p>
+	<c:if test="${study.status eq 'CANCELLED'}">
+	    <tr>
+	        <th>취소 사유: </th>
+	        <td>${study.cancelReason}</td>
+	    </tr>
+	    <br>
+	    <tr>
+	        <th>취소 일시: </th>
+	        <td>${cancelDate}</td>
+	    </tr>
 	</c:if>
 	
 	<br>

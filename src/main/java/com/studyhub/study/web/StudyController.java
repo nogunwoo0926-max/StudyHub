@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import com.studyhub.member.service.MemberVO;
 import com.studyhub.study.service.StudyMemberVO;
+import com.studyhub.study.service.StudySearchVO;
 import com.studyhub.study.service.StudyService;
 import com.studyhub.study.service.StudyVO;
 
@@ -24,9 +25,18 @@ public class StudyController {
 
     // 스터디 목록 조회
     @GetMapping("/study/list.do")
-    public String studyList(Model model) {
-        List<StudyVO> studyList = studyService.selectStudyList();
+    public String studyList(StudySearchVO searchVO, Model model) {
+        if (searchVO.getPage() < 1) {
+            searchVO.setPage(1);
+        }
+
+        List<StudyVO> studyList = studyService.selectStudyList(searchVO);
+        int totalCount = studyService.selectStudyCount(searchVO);
+        int totalPage = (int) Math.ceil((double) totalCount / searchVO.getPageSize());
+
         model.addAttribute("studyList", studyList);
+        model.addAttribute("search", searchVO);
+        model.addAttribute("totalPage", totalPage);
         return "study/list";
     }
     
@@ -36,10 +46,17 @@ public class StudyController {
         return "study/write";
     }
     @PostMapping("/study/write.do")
-    public String writeStudy(StudyVO studyVO, HttpSession session) {
+    public String writeStudy(StudyVO studyVO, HttpSession session, Model model) {
         MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         studyVO.setLeaderId(loginMember.getMemberId());  // 세션에 로그인한 멤버의 아이디를 가져와 스터디 등록자 아이디로 설정
-        studyService.insertStudy(studyVO);
+
+        try {
+            studyService.insertStudy(studyVO);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "study/write";
+        }
+
         return "redirect:/study/list.do";
     }
     
@@ -78,28 +95,62 @@ public class StudyController {
     }
     
     @PostMapping("/study/edit.do")
-    public String editStudy( StudyVO studyVO, HttpSession session) {
+    public String editStudy(StudyVO studyVO, HttpSession session, Model model) {
         StudyVO originalStudy = studyService.selectStudyDetail(studyVO.getStudyId());
         MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
         
         if (!originalStudy.getLeaderId().equals(loginMember.getMemberId())) {
             return "redirect:/study/detail.do?studyId=" + studyVO.getStudyId();
         }
-        studyService.updateStudy(studyVO);
+        try {
+            studyService.updateStudy(studyVO);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            model.addAttribute("study", studyVO);
+            return "study/edit";
+        }
+
         return "redirect:/study/detail.do?studyId=" + studyVO.getStudyId();
+    }
+
+    // 스터디장이 모집 마감
+    @PostMapping("/study/close.do")
+    public String closeStudy(Long studyId, HttpSession session) {
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+
+        studyService.closeStudy(studyId, loginMember.getMemberId());
+
+        return "redirect:/study/detail.do?studyId=" + studyId;
+    }
+
+    // 스터디장이 모집 재개
+    @PostMapping("/study/open.do")
+    public String openStudy(Long studyId, HttpSession session) {
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+
+        studyService.openStudy(studyId, loginMember.getMemberId());
+
+        return "redirect:/study/detail.do?studyId=" + studyId;
     }
     
     // 스터디 삭제
     @PostMapping("/study/delete.do")
-    public String deleteStudy(Long studyId, HttpSession session) {
+    public String deleteStudy(StudyVO studyVO, HttpSession session) {
+    	
+        Long studyId = studyVO.getStudyId();
         StudyVO study = studyService.selectStudyDetail(studyId);
         MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
 
-        // 작성자가 아니면 삭제 불가
+        // 존재하지 않는 스터디
+        if (study == null) {
+            return "redirect:/study/list.do";
+        }
+        // 스터디장 본인만 취소 가능
         if (!study.getLeaderId().equals(loginMember.getMemberId())) {
             return "redirect:/study/detail.do?studyId=" + studyId;
         }
-        studyService.deleteStudy(studyId);
+        studyService.deleteStudy(studyVO);
+
         return "redirect:/study/list.do";
     }
     
@@ -200,5 +251,27 @@ public class StudyController {
         studyService.cancelStudyApplication(studyMemberVO);
 
         return "redirect:/study/detail.do?studyId=" + studyId;
+    }
+
+    // 승인된 회원의 스터디 탈퇴
+    @PostMapping("/study/leave.do")
+    public String leaveStudy(Long studyId, HttpSession session) {
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+
+        studyService.leaveStudy(studyId, loginMember.getMemberId());
+
+        return "redirect:/study/detail.do?studyId=" + studyId;
+    }
+    
+    // 내가 신청한 스터디 목록
+    @GetMapping("/study/myApplications.do")
+    public String myApplicationList(HttpSession session, Model model) {
+
+        MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+        List<StudyMemberVO> applicationList = studyService.selectMyApplicationList(loginMember.getMemberId());
+        
+        model.addAttribute("applicationList", applicationList);
+
+        return "study/myApplications";
     }
 }

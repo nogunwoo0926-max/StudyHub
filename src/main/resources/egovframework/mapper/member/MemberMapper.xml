@@ -14,7 +14,9 @@
 			NAME AS name,
 			EMAIL AS email,
 			ROLE AS role,
-			JOIN_DATE AS joinDate
+			JOIN_DATE AS joinDate,
+			MEMBER_STATUS AS memberStatus,
+			WITHDRAW_DATE AS withdrawDate
 		FROM TB_MEMBER
 		ORDER BY JOIN_DATE DESC
 	</select>
@@ -28,7 +30,9 @@
 			NAME,
 			EMAIL,
 			ROLE,
-			JOIN_DATE
+			JOIN_DATE,
+			MEMBER_STATUS,
+			WITHDRAW_DATE
 		)
 		VALUES (
 			#{memberId},
@@ -36,7 +40,9 @@
 			#{name},
 			#{email},
 			'USER',
-			SYSDATE
+			SYSDATE,
+			'ACTIVE',
+			NULL
 		)
 	</insert>
 	
@@ -50,9 +56,69 @@
 			NAME AS name,
 			EMAIL AS email,
 			ROLE AS role,
-			JOIN_DATE AS joinDate
+			JOIN_DATE AS joinDate,
+			MEMBER_STATUS AS memberStatus,
+			WITHDRAW_DATE AS withdrawDate
 		FROM TB_MEMBER
 			WHERE ID = #{memberId}
 			AND PASSWORD = #{password}
+			AND MEMBER_STATUS = 'ACTIVE'
 	</select>
+
+	<!-- 회원정보 수정 -->
+	<update id="updateMember" parameterType="com.studyhub.member.service.MemberVO">
+	    UPDATE TB_MEMBER
+	    SET
+	        NAME = #{name},
+	        EMAIL = #{email}
+	    WHERE ID = #{memberId}
+	</update>
+
+	<!-- 이메일 중복 확인 -->
+	<select id="countByEmail" parameterType="string" resultType="int">
+	    SELECT COUNT(*)
+	    FROM TB_MEMBER
+	    WHERE EMAIL = #{_parameter}
+	</select>
+
+	<!-- 회원 본인을 제외한 이메일 중복 확인 -->
+	<select id="countByEmailExceptMemberId" parameterType="com.studyhub.member.service.MemberVO" resultType="int">
+	    SELECT COUNT(*)
+	    FROM TB_MEMBER
+	    WHERE EMAIL = #{email}
+	      AND ID &lt;&gt; #{memberId}
+	</select>
+
+	<!-- 아이디로 회원 조회 -->
+	<select id="selectMemberById" parameterType="string" resultType="com.studyhub.member.service.MemberVO">
+	    SELECT
+	        ID AS memberId,
+	        PASSWORD AS password,
+	        NAME AS name,
+	        EMAIL AS email,
+	        ROLE AS role,
+	        JOIN_DATE AS joinDate,
+	        MEMBER_STATUS AS memberStatus,
+	        WITHDRAW_DATE AS withdrawDate
+	    FROM TB_MEMBER
+	    WHERE ID = #{_parameter}
+	      AND MEMBER_STATUS = 'ACTIVE'
+	</select>
+
+	<!-- 비밀번호 변경 -->
+	<update id="updatePassword" parameterType="com.studyhub.member.service.MemberVO">
+	    UPDATE TB_MEMBER
+	    SET PASSWORD = #{password}
+	    WHERE ID = #{memberId}
+	</update>
+
+	<!-- 회원 탈퇴 -->
+	<update id="withdrawMember" parameterType="string">
+	    UPDATE TB_MEMBER
+	    SET
+	        MEMBER_STATUS = 'WITHDRAWN',
+	        WITHDRAW_DATE = SYSDATE
+	    WHERE ID = #{_parameter}
+	      AND MEMBER_STATUS = 'ACTIVE'
+	</update>
 </mapper>

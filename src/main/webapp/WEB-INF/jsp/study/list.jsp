@@ -7,10 +7,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/studyhub.css">
 <title>StudyHub 스터디 목록</title>
 </head>
 <body>
 	<h1>스터디 목록</h1>
+	<form action="${pageContext.request.contextPath}/study/list.do" method="get">
+		<input type="text" name="keyword" value="${search.keyword}" placeholder="제목, 내용, 스터디장 검색">
+		<select name="status">
+			<option value="" ${empty search.status ? 'selected' : ''}>전체 상태</option>
+			<option value="OPEN" ${search.status eq 'OPEN' ? 'selected' : ''}>모집 중</option>
+			<option value="CLOSED" ${search.status eq 'CLOSED' ? 'selected' : ''}>모집 마감</option>
+		</select>
+		<button type="submit">검색</button>
+		<a href="${pageContext.request.contextPath}/study/list.do">초기화</a>
+	</form>
+	<br>
 	<table border="1">
 		<thead>
 			<tr>
@@ -25,8 +37,8 @@
 		</thead>
 		<tbody>
 			<c:forEach var="study" items="${studyList}">
-			<fmt:formatDate value="${study.startDate}" pattern="yyyy년-MM월-dd일" var="startDate"/>
-			<fmt:formatDate value="${study.endDate}" pattern="yyyy년-MM월-dd일" var="endDate"/>
+			<fmt:formatDate value="${study.startDate}" pattern="yyyy년 MM월 dd일" var="startDate"/>
+			<fmt:formatDate value="${study.endDate}" pattern="yyyy년 MM월 dd일" var="endDate"/>
 				<tr>
 					<td>${study.studyId}</td>
 					<td>
@@ -41,6 +53,21 @@
 			</c:forEach>
 		</tbody>
 	</table>
+	<c:if test="${totalPage > 0}">
+		<div>
+			<c:forEach var="page" begin="1" end="${totalPage}">
+				<c:choose>
+					<c:when test="${page eq search.page}">
+						<strong>${page}</strong>
+					</c:when>
+					<c:otherwise>
+						<a href="${pageContext.request.contextPath}/study/list.do?page=${page}&keyword=${search.keyword}&status=${search.status}">${page}</a>
+					</c:otherwise>
+				</c:choose>
+				&nbsp;
+			</c:forEach>
+		</div>
+	</c:if>
 	<c:if test="${not empty sessionScope.loginMember}">
 	    <a href="${pageContext.request.contextPath}/study/write.do"> 스터디 등록 </a> 
 	</c:if>

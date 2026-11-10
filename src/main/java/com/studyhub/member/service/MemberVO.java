@@ -10,6 +10,8 @@ public class MemberVO {
 	private String email;
 	private String role;
 	private Date joinDate;
+	private String memberStatus;
+	private Date withdrawDate;
 
 	public String getMemberId() {
 		return memberId;
@@ -57,5 +59,21 @@ public class MemberVO {
 
 	public void setJoinDate(Date joinDate) {
 		this.joinDate = joinDate;
+	}
+
+	public String getMemberStatus() {
+		return memberStatus;
+	}
+
+	public void setMemberStatus(String memberStatus) {
+		this.memberStatus = memberStatus;
+	}
+
+	public Date getWithdrawDate() {
+		return withdrawDate;
+	}
+
+	public void setWithdrawDate(Date withdrawDate) {
+		this.withdrawDate = withdrawDate;
 	}
 }

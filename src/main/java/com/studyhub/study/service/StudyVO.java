@@ -18,6 +18,8 @@ public class StudyVO {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date endDate;
     private Date regDate;
+    private String cancelReason;
+    private Date cancelDate;
 
     public Long getStudyId() {
         return studyId;
@@ -97,6 +99,22 @@ public class StudyVO {
 
     public void setRegDate(Date regDate) {
         this.regDate = regDate;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
+    }
+
+    public Date getCancelDate() {
+        return cancelDate;
+    }
+
+    public void setCancelDate(Date cancelDate) {
+        this.cancelDate = cancelDate;
     }
     
 }

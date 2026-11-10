@@ -6,6 +6,7 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.studyhub.study.service.StudyMemberVO;
+import com.studyhub.study.service.StudySearchVO;
 import com.studyhub.study.service.StudyVO;
 
 @Repository
@@ -18,6 +19,16 @@ public class StudyDAO {
     // 스터디 목록 조회
     public List<StudyVO> selectStudyList() {
         return sqlSession.selectList("studyMapper.selectStudyList");
+    }
+
+    // 스터디 검색 및 상태 필터 조회
+    public List<StudyVO> selectStudyList(StudySearchVO searchVO) {
+        return sqlSession.selectList("studyMapper.selectStudyListBySearch", searchVO);
+    }
+
+    // 스터디 검색 결과 개수 조회
+    public int selectStudyCount(StudySearchVO searchVO) {
+        return sqlSession.selectOne("studyMapper.selectStudyCount", searchVO);
     }
     
     // 스터디 등록
@@ -34,10 +45,20 @@ public class StudyDAO {
     public int updateStudy(StudyVO studyVO) {
         return sqlSession.update("studyMapper.updateStudy",studyVO);
     }
+
+    // 스터디장이 모집 마감
+    public int closeStudy(Long studyId) {
+        return sqlSession.update("studyMapper.closeStudy", studyId);
+    }
+
+    // 스터디장이 모집 재개
+    public int openStudy(Long studyId) {
+        return sqlSession.update("studyMapper.openStudy", studyId);
+    }
     
     // 스터디 삭제
-    public int deleteStudy(Long studyId) {
-    	return sqlSession.update("studyMapper.deleteStudy", studyId);
+    public int deleteStudy(StudyVO studyVO) {
+        return sqlSession.update("studyMapper.deleteStudy", studyVO);
     }
 
     // 스터디 취소 시 기존 신청 이력도 취소 상태로 보존
@@ -69,6 +90,11 @@ public class StudyDAO {
     public int increaseCurrentMember(Long studyId) {
         return sqlSession.update("studyMapper.increaseCurrentMember",studyId);
     }
+
+    // 모집 정원 도달 시 모집 마감
+    public int closeStudyIfFull(Long studyId) {
+        return sqlSession.update("studyMapper.closeStudyIfFull", studyId);
+    }
     
     // 스터디 신청자 정보 검증
     public StudyMemberVO selectStudyMember(Long studyMemberId) {
@@ -89,5 +115,30 @@ public class StudyDAO {
     public int cancelStudyApplication(StudyMemberVO studyMemberVO) {
         return sqlSession.update( "studyMapper.cancelStudyApplication", studyMemberVO);
     }
+
+    // 승인된 회원의 스터디 탈퇴
+    public int leaveStudyApplication(StudyMemberVO studyMemberVO) {
+        return sqlSession.update("studyMapper.leaveStudyApplication", studyMemberVO);
+    }
+
+    // 스터디 현재 인원 감소
+    public int decreaseCurrentMember(Long studyId) {
+        return sqlSession.update("studyMapper.decreaseCurrentMember", studyId);
+    }
+
+    // 내가 신청한 스터디 목록 조회
+    public List<StudyMemberVO> selectMyApplicationList(String memberId) {
+        return sqlSession.selectList("studyMapper.selectMyApplicationList", memberId);
+    }
+
+    // 내가 모집 중인 스터디 목록 조회
+    public List<StudyVO> selectMyStudyList(String leaderId) {
+        return sqlSession.selectList("studyMapper.selectMyStudyList", leaderId);
+    }
+
+   // 내가 만든 스터디 전체 이력 조회
+   public List<StudyVO> selectMyStudyHistoryList(String leaderId) {
+       return sqlSession.selectList("studyMapper.selectMyStudyHistoryList", leaderId);
+   }
     
 }

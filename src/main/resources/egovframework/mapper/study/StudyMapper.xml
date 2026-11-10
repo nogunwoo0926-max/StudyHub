@@ -17,10 +17,56 @@
 			STATUS AS status,
 			START_DATE AS startDate,
 			END_DATE AS endDate,
-			REG_DATE AS regDate
+			REG_DATE AS regDate,
+	        CANCEL_REASON AS cancelReason,
+	        CANCEL_DATE AS cancelDate
 		FROM TB_STUDY
 		WHERE STATUS &lt;&gt; 'CANCELLED'
 		ORDER BY REG_DATE DESC
+	</select>
+
+	<!-- 스터디 검색 및 상태 필터 조회 -->
+	<select id="selectStudyListBySearch" parameterType="com.studyhub.study.service.StudySearchVO" resultType="com.studyhub.study.service.StudyVO">
+	    SELECT
+	        STUDY_ID AS studyId,
+	        LEADER_ID AS leaderId,
+	        TITLE AS title,
+	        CONTENT AS content,
+	        MAX_MEMBER AS maxMember,
+	        CURRENT_MEMBER AS currentMember,
+	        STATUS AS status,
+	        START_DATE AS startDate,
+	        END_DATE AS endDate,
+	        REG_DATE AS regDate,
+	        CANCEL_REASON AS cancelReason,
+	        CANCEL_DATE AS cancelDate
+	    FROM TB_STUDY
+	    WHERE STATUS &lt;&gt; 'CANCELLED'
+	    <if test="keyword != null and keyword != ''">
+	        AND (TITLE LIKE '%' || #{keyword} || '%'
+	             OR CONTENT LIKE '%' || #{keyword} || '%'
+	             OR LEADER_ID LIKE '%' || #{keyword} || '%')
+	    </if>
+	    <if test="status != null and status != ''">
+	        AND STATUS = #{status}
+	    </if>
+	    ORDER BY REG_DATE DESC
+	    OFFSET #{offset} ROWS FETCH NEXT #{pageSize} ROWS ONLY
+	</select>
+
+	<!-- 스터디 검색 결과 개수 조회 -->
+	<select id="selectStudyCount" parameterType="com.studyhub.study.service.StudySearchVO" resultType="int">
+	    SELECT COUNT(*)
+	    FROM TB_STUDY
+	    WHERE STATUS &lt;&gt; 'CANCELLED'
+	    <if test="keyword != null and keyword != ''">
+	        AND (TITLE LIKE '%' || #{keyword} || '%'
+	             OR CONTENT LIKE '%' || #{keyword} || '%'
+	             OR LEADER_ID LIKE '%' || #{keyword} || '%')
+	    </if>
+	    <if test="status != null and status != ''">
+	        AND STATUS = #{status}
+	    </if>
 	</select>
 	
 	<!-- 스터디 등록(로그인 필수) -->
@@ -63,7 +109,9 @@
 	        STATUS AS status,
 	        START_DATE AS startDate,
 	        END_DATE AS endDate,
-	        REG_DATE AS regDate
+	        REG_DATE AS regDate,
+	        CANCEL_REASON AS cancelReason,
+	        CANCEL_DATE AS cancelDate
 	    FROM TB_STUDY
 	    WHERE STUDY_ID = #{studyId}
 	</select>
@@ -79,13 +127,33 @@
 	        END_DATE = #{endDate}
 	    WHERE STUDY_ID = #{studyId}
 	</update>
+
+	<!-- 스터디장이 직접 모집 마감 -->
+	<update id="closeStudy" parameterType="long">
+	    UPDATE TB_STUDY
+	    SET STATUS = 'CLOSED'
+	    WHERE STUDY_ID = #{studyId}
+	      AND STATUS = 'OPEN'
+	</update>
+
+	<!-- 스터디장이 직접 모집 재개 -->
+	<update id="openStudy" parameterType="long">
+	    UPDATE TB_STUDY
+	    SET STATUS = 'OPEN'
+	    WHERE STUDY_ID = #{studyId}
+	      AND STATUS = 'CLOSED'
+	      AND CURRENT_MEMBER &lt; MAX_MEMBER
+	</update>
 	
 	<!-- 스터디 취소(논리 삭제) 신청 기록과 스터디 행은 보존하고, 일반 목록에서만 숨김 -->
-	<update id="deleteStudy" parameterType="long">
+	<update id="deleteStudy" parameterType="com.studyhub.study.service.StudyVO">
 	    UPDATE TB_STUDY
-	    SET STATUS = 'CANCELLED'
-	    WHERE STUDY_ID = #{studyId}
-	      AND STATUS &lt;&gt; 'CANCELLED'
+	    SET
+	        STATUS = 'CANCELLED',
+	        CANCEL_REASON = #{cancelReason},
+	        CANCEL_DATE = SYSDATE
+	    WHERE STUDY_ID = #{studyId} 
+	    AND STATUS &lt;&gt; 'CANCELLED'
 	</update>
 
 	<!-- 스터디 취소 시 신청 이력도 삭제하지 않고 취소 상태로 보존 -->
@@ -148,6 +216,15 @@
 	    SET CURRENT_MEMBER = CURRENT_MEMBER + 1
 	    WHERE STUDY_ID = #{studyId} AND CURRENT_MEMBER &lt; MAX_MEMBER
 	</update>
+
+	<!-- 모집 인원이 정원에 도달하면 모집 마감 -->
+	<update id="closeStudyIfFull" parameterType="long">
+	    UPDATE TB_STUDY
+	    SET STATUS = 'CLOSED'
+	    WHERE STUDY_ID = #{studyId}
+	      AND CURRENT_MEMBER &gt;= MAX_MEMBER
+	      AND STATUS = 'OPEN'
+	</update>
 	
 	<!-- 스터디 신청 단건 조회(특정 신청 건이 실제로 누구의 신청이고, 어느 스터디에 대한 신청인지 DB 기준으로 다시 확인) -->
 	<select id="selectStudyMember" parameterType="long" resultType="com.studyhub.study.service.StudyMemberVO">
@@ -187,4 +264,82 @@
 	    SET STATUS = 'CANCELLED'
 	    WHERE STUDY_ID = #{studyId} AND MEMBER_ID = #{memberId} AND STATUS = 'WAIT'
 	</update>
+
+	<!-- 승인된 회원의 스터디 탈퇴 -->
+	<update id="leaveStudyApplication" parameterType="com.studyhub.study.service.StudyMemberVO">
+	    UPDATE TB_STUDY_MEMBER
+	    SET STATUS = 'CANCELLED'
+	    WHERE STUDY_ID = #{studyId}
+	      AND MEMBER_ID = #{memberId}
+	      AND STATUS = 'APPROVED'
+	</update>
+
+	<!-- 스터디 탈퇴 시 현재 인원 감소 -->
+	<update id="decreaseCurrentMember" parameterType="long">
+	    UPDATE TB_STUDY
+	    SET CURRENT_MEMBER = CURRENT_MEMBER - 1
+	    WHERE STUDY_ID = #{studyId}
+	      AND CURRENT_MEMBER > 1
+	</update>
+
+	<!-- 내가 신청한 스터디 목록 조회 -->
+	<select id="selectMyApplicationList" parameterType="string" resultType="com.studyhub.study.service.StudyMemberVO">
+	    SELECT
+	        SM.STUDY_MEMBER_ID AS studyMemberId,
+	        SM.STUDY_ID AS studyId,
+	        SM.MEMBER_ID AS memberId,
+	        SM.STATUS AS status,
+	        SM.APPLY_DATE AS applyDate,
+
+	        S.TITLE AS title,
+	        S.STATUS AS studyStatus,
+	        S.CANCEL_REASON AS cancelReason,
+	        S.CANCEL_DATE AS cancelDate
+	    FROM TB_STUDY_MEMBER SM
+	    JOIN TB_STUDY S
+	      ON SM.STUDY_ID = S.STUDY_ID
+    WHERE SM.MEMBER_ID = #{_parameter}
+	    ORDER BY SM.APPLY_DATE DESC
+	</select>
+
+	<!-- 내가 모집 중인 스터디 목록 조회 -->
+	<select id="selectMyStudyList" parameterType="string" resultType="com.studyhub.study.service.StudyVO">
+	    SELECT
+	        STUDY_ID AS studyId,
+	        LEADER_ID AS leaderId,
+	        TITLE AS title,
+	        CONTENT AS content,
+	        MAX_MEMBER AS maxMember,
+	        CURRENT_MEMBER AS currentMember,
+	        STATUS AS status,
+	        START_DATE AS startDate,
+	        END_DATE AS endDate,
+	        REG_DATE AS regDate,
+	        CANCEL_REASON AS cancelReason,
+	        CANCEL_DATE AS cancelDate
+	    FROM TB_STUDY
+	    WHERE LEADER_ID = #{_parameter}
+	      AND STATUS = 'OPEN'
+	    ORDER BY REG_DATE DESC
+	</select>
+
+	<!-- 내가 만든 스터디 전체 이력 조회 -->
+	<select id="selectMyStudyHistoryList" parameterType="string" resultType="com.studyhub.study.service.StudyVO">
+	    SELECT
+	        STUDY_ID AS studyId,
+	        LEADER_ID AS leaderId,
+	        TITLE AS title,
+	        CONTENT AS content,
+	        MAX_MEMBER AS maxMember,
+	        CURRENT_MEMBER AS currentMember,
+	        STATUS AS status,
+	        START_DATE AS startDate,
+	        END_DATE AS endDate,
+	        REG_DATE AS regDate,
+	        CANCEL_REASON AS cancelReason,
+	        CANCEL_DATE AS cancelDate
+	    FROM TB_STUDY
+	    WHERE LEADER_ID = #{_parameter}
+	    ORDER BY REG_DATE DESC
+	</select>
 </mapper>

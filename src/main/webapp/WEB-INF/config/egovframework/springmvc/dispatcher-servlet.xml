@@ -18,6 +18,9 @@
     <!-- @RequestMapping 등 MVC 애너테이션 활성화 -->
     <mvc:annotation-driven />
 
+    <!-- 정적 CSS 리소스 -->
+    <mvc:resources mapping="/css/**" location="/css/" />
+
     <!-- JSP ViewResolver -->
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix" value="/WEB-INF/jsp/" />
@@ -28,14 +31,21 @@
 	<mvc:interceptors>
 	    <mvc:interceptor>
 	        <mvc:mapping path="/member/mypage.do"/>
+	        <mvc:mapping path="/member/edit.do"/>
+	        <mvc:mapping path="/member/password.do"/>
+	        <mvc:mapping path="/member/withdraw.do"/>
 	        <mvc:mapping path="/study/write.do"/>
 	        <mvc:mapping path="/study/edit.do"/>
+	        <mvc:mapping path="/study/close.do"/>
+	        <mvc:mapping path="/study/open.do"/>
 	        <mvc:mapping path="/study/delete.do"/>
 	        <mvc:mapping path="/study/apply.do"/>
 	        <mvc:mapping path="/study/applicants.do"/>
 			<mvc:mapping path="/study/approve.do"/>
 			<mvc:mapping path="/study/reject.do"/>
 			<mvc:mapping path="/study/cancelApply.do"/>
+			<mvc:mapping path="/study/leave.do"/>
+			<mvc:mapping path="/notification/read.do"/>
 	        <bean class="com.studyhub.common.interceptor.LoginInterceptor"/>
 	    </mvc:interceptor>
 	</mvc:interceptors>

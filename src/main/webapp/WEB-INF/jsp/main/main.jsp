@@ -5,6 +5,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/studyhub.css">
 <title>StudyHub</title>
 </head>
 <body>
@@ -13,7 +14,7 @@
 	<c:choose>
 		<%--로그인한 상태면 --%>
 		<c:when test="${not empty sessionScope.loginMember}">
-			<p>${sessionScope.loginMember.name}님환영합니다.</p>
+			<p>${sessionScope.loginMember.name}님 환영합니다.</p>
 			<a href="${pageContext.request.contextPath}/member/logout.do"> 로그아웃 </a>
 			<br>
 			<a href="${pageContext.request.contextPath}/member/mypage.do"> 마이 페이지로 </a>

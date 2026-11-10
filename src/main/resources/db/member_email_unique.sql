@@ -1,0 +1,3 @@
+-- 기존 중복 이메일이 있으면 먼저 정리한 뒤 실행하세요.
+ALTER TABLE TB_MEMBER
+ADD CONSTRAINT UQ_TB_MEMBER_EMAIL UNIQUE (EMAIL);

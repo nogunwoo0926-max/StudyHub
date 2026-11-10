@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="notificationMapper">
+
+    <!-- 알림 등록 -->
+    <insert id="insertNotification" parameterType="com.studyhub.notification.service.NotificationVO">
+        INSERT INTO TB_NOTIFICATION (
+            NOTIFICATION_ID,
+            RECEIVER_ID,
+            STUDY_ID,
+            TYPE,
+            MESSAGE,
+            IS_READ,
+            REG_DATE
+        )
+        VALUES (
+            SEQ_NOTIFICATION.NEXTVAL,
+            #{receiverId},
+            #{studyId},
+            #{type},
+            #{message},
+            'N',
+            SYSDATE
+        )
+    </insert>
+
+    <!-- 회원 알림 목록 조회 -->
+    <select id="selectNotificationList" parameterType="string" resultType="com.studyhub.notification.service.NotificationVO">
+        SELECT
+            NOTIFICATION_ID AS notificationId,
+            RECEIVER_ID AS receiverId,
+            STUDY_ID AS studyId,
+            TYPE AS type,
+            MESSAGE AS message,
+            IS_READ AS readYn,
+            REG_DATE AS regDate
+        FROM TB_NOTIFICATION
+        WHERE RECEIVER_ID = #{_parameter}
+        ORDER BY REG_DATE DESC
+    </select>
+
+    <!-- 알림 읽음 처리 -->
+    <update id="markAsRead" parameterType="com.studyhub.notification.service.NotificationVO">
+        UPDATE TB_NOTIFICATION
+        SET IS_READ = 'Y'
+        WHERE NOTIFICATION_ID = #{notificationId}
+          AND RECEIVER_ID = #{receiverId}
+          AND IS_READ = 'N'
+    </update>
+
+</mapper>

@@ -4,49 +4,85 @@ import java.util.Date;
 
 public class StudyMemberVO {
 
-    private Long studyMemberId;
-    private Long studyId;
-    private String memberId;
-    private String status;
-    private Date applyDate;
+	private Long studyMemberId;
+	private Long studyId;
+	private String memberId;
+	private String status;
+	private Date applyDate;
+	private String title;
+	private String studyStatus;
+	private String cancelReason;
+	private Date cancelDate;
 
-    public Long getStudyMemberId() {
-        return studyMemberId;
-    }
+	public Long getStudyMemberId() {
+		return studyMemberId;
+	}
 
-    public void setStudyMemberId(Long studyMemberId) {
-        this.studyMemberId = studyMemberId;
-    }
+	public void setStudyMemberId(Long studyMemberId) {
+		this.studyMemberId = studyMemberId;
+	}
 
-    public Long getStudyId() {
-        return studyId;
-    }
+	public Long getStudyId() {
+		return studyId;
+	}
 
-    public void setStudyId(Long studyId) {
-        this.studyId = studyId;
-    }
+	public void setStudyId(Long studyId) {
+		this.studyId = studyId;
+	}
 
-    public String getMemberId() {
-        return memberId;
-    }
+	public String getMemberId() {
+		return memberId;
+	}
 
-    public void setMemberId(String memberId) {
-        this.memberId = memberId;
-    }
+	public void setMemberId(String memberId) {
+		this.memberId = memberId;
+	}
 
-    public String getStatus() {
-        return status;
-    }
+	public String getStatus() {
+		return status;
+	}
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
-    public Date getApplyDate() {
-        return applyDate;
-    }
+	public Date getApplyDate() {
+		return applyDate;
+	}
 
-    public void setApplyDate(Date applyDate) {
-        this.applyDate = applyDate;
-    }
+	public void setApplyDate(Date applyDate) {
+		this.applyDate = applyDate;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public String getStudyStatus() {
+		return studyStatus;
+	}
+
+	public void setStudyStatus(String studyStatus) {
+		this.studyStatus = studyStatus;
+	}
+
+	public String getCancelReason() {
+		return cancelReason;
+	}
+
+	public void setCancelReason(String cancelReason) {
+		this.cancelReason = cancelReason;
+	}
+
+	public Date getCancelDate() {
+		return cancelDate;
+	}
+
+	public void setCancelDate(Date cancelDate) {
+		this.cancelDate = cancelDate;
+	}
 }
